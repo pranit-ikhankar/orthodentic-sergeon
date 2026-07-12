@@ -1,0 +1,117 @@
+{
+  "identity": {
+    "name": "E1 - The Anti-AI Designer",
+    "mission": "Create a premium, high-trust dental clinic template that feels human, professional, and distinct.",
+    "tone": "Calm, Professional, Trustworthy, Modern, Approachable."
+  },
+  "theme": {
+    "mode": "light",
+    "strategy": "Medical Clean - High white space, strong typography, subtle blue/teal accents.",
+    "colors": {
+      "primary": "#0F172A",
+      "primary_foreground": "#F8FAFC",
+      "secondary": "#F1F5F9",
+      "secondary_foreground": "#0F172A",
+      "accent": "#0D9488",
+      "accent_foreground": "#FFFFFF",
+      "background": "#FFFFFF",
+      "surface": "#F8FAFC",
+      "muted": "#94A3B8",
+      "border": "#E2E8F0",
+      "error": "#EF4444",
+      "success": "#10B981"
+    },
+    "typography": {
+      "headings": {
+        "family": "Manrope, sans-serif",
+        "weights": ["600", "700", "800"],
+        "usage": "Use for all section titles, hero text, and card headings. Tracking tight (-0.02em)."
+      },
+      "body": {
+        "family": "DM Sans, sans-serif",
+        "weights": ["400", "500"],
+        "usage": "Use for all paragraph text, labels, and descriptions. Tracking normal."
+      }
+    }
+  },
+  "layout_strategies": {
+    "container": "max-w-7xl mx-auto px-6 md:px-12",
+    "spacing": "Generous. Use py-24 or py-32 for section spacing. Gap-8 to Gap-12 for grids.",
+    "grid_system": "Bento Grid (Mode A) for Services. Asymmetric split for Hero.",
+    "mobile_rules": "Stack all grids to col-1. Images max-h-[60vh]. Touch targets min 44px."
+  },
+  "components": {
+    "HeroSection": {
+      "path": "/app/frontend/src/components/custom/HeroSection.jsx",
+      "type": "custom",
+      "instructions": "Split layout. Left: High-impact Headline + Subtext + Booking CTA. Right: Large engaging image with a 'floating' trust badge (e.g., '500+ Happy Patients') overlapping the corner. No full-width background images.",
+      "image_url": "https://images.unsplash.com/photo-1653508310326-2482de0e96c3"
+    },
+    "ServicesGrid": {
+      "path": "/app/frontend/src/components/custom/ServicesGrid.jsx",
+      "type": "custom",
+      "instructions": "Use the Bento Grid strategy. Mix large cards (Implants/Cosmetic) with smaller cards (Cleaning/Whitening). Use icons + short descriptions. Hover effect: Subtle lift and border color change.",
+      "images": {
+        "implants": "https://images.unsplash.com/photo-1694345162188-2e5c06fe75e7",
+        "general": "https://images.unsplash.com/photo-1662837625427-970713d74aa6"
+      }
+    },
+    "BookingDialog": {
+      "path": "/app/frontend/src/components/custom/BookingDialog.jsx",
+      "type": "shadcn",
+      "instructions": "Use Shadcn Dialog. Inside: A multi-step form or a clean vertical form. Fields: Name, Phone, Email, Service Type (Select), Preferred Date, Time Slot. Submit to backend.",
+      "base_component": "Dialog"
+    },
+    "Testimonials": {
+      "path": "/app/frontend/src/components/custom/Testimonials.jsx",
+      "type": "shadcn",
+      "instructions": "Use Shadcn Carousel. Clean cards with 5 stars (gold color), quote text, and patient name. Minimalist design.",
+      "base_component": "Carousel"
+    },
+    "TeamSection": {
+      "path": "/app/frontend/src/components/custom/TeamSection.jsx",
+      "type": "custom",
+      "instructions": "Grid of doctor profiles. Image + Name + Specialty. Clean, simple cards.",
+      "image_url": "https://images.unsplash.com/photo-1758575514487-0390fcacc339"
+    },
+    "BeforeAfter": {
+      "path": "/app/frontend/src/components/custom/BeforeAfter.jsx",
+      "type": "custom",
+      "instructions": "Interactive slider comparison if possible, or side-by-side cards. Show transformational results."
+    },
+    "Navbar": {
+      "path": "/app/frontend/src/components/custom/Navbar.jsx",
+      "type": "custom",
+      "instructions": "Sticky. White background with shadow-sm. Logo left, Links center (hidden mobile), 'Book Now' Button right (Teal). Mobile Menu (Sheet)."
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_main": "https://images.unsplash.com/photo-1653508310326-2482de0e96c3",
+      "clinic_interior": "https://images.unsplash.com/photo-1762625570087-6d98fca29531",
+      "dentist_patient": "https://images.unsplash.com/photo-1662837625427-970713d74aa6",
+      "team_group": "https://images.unsplash.com/photo-1758575514487-0390fcacc339",
+      "child_patient": "https://images.unsplash.com/photo-1722238577710-1145a782ebb9",
+      "tooth_model": "https://images.unsplash.com/photo-1694345162188-2e5c06fe75e7"
+    },
+    "icons_library": "lucide-react"
+  },
+  "visual_enhancers": {
+    "glassmorphism": "Use sparingly. Only for sticky nav or overlays. backdrop-blur-md bg-white/80.",
+    "gradients": "None. Flat colors only.",
+    "borders": "1px solid border-slate-100. Rounded-lg or rounded-xl.",
+    "shadows": "shadow-sm for interactive elements. shadow-md for floating elements."
+  },
+  "universal_guidelines": [
+    "Do not use gradients.",
+    "Do not use center text alignment for long paragraphs.",
+    "Use Manrope for all Headings.",
+    "Use DM Sans for all Body text.",
+    "Primary Action Color: #0D9488 (Teal 600).",
+    "Text Color: #0F172A (Slate 900).",
+    "All interactive elements must have data-testid attributes.",
+    "Ensure 3:1 contrast ratio for all text.",
+    "Use 'sonner' for toast notifications."
+  ],
+  "instructions_to_main_agent": "You are building a premium Dental Clinic Template. Follow the JSON structure strictly. Create the components in the specified paths. Ensure the 'BookingDialog' connects to a functional backend endpoint (mocked or real). Use the provided Unsplash URLs for placeholders. Do not ask clarifying questions."
+}
