@@ -30,6 +30,50 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =========================================================
+# FASTAPI APP & ROUTER
+# =========================================================
+
+app = FastAPI(
+    title="Orthodontic Surgeon API",
+    description="Backend API for Appointments, Status, and Clinic Management",
+    version="1.0.0"
+)
+
+router = APIRouter()
+
+# =========================================================
+# LAZY MONGODB CLIENT
+# =========================================================
+
+_client: Optional[AsyncIOMotorClient] = None
+_db = None
+
+def get_db():
+    global _client, _db
+    if _db is None:
+        mongo_url = os.environ.get("MONGO_URL")
+        if not mongo_url:
+            raise HTTPException(
+                status_code=503,
+                detail="Database connection not configured. Please set MONGO_URL in environment variables."
+            )
+
+        if "#@" in mongo_url:
+            mongo_url = mongo_url.replace("#@", "%23@")
+
+        db_name = os.environ.get("DB_NAME", "dentists")
+        try:
+            _client = AsyncIOMotorClient(mongo_url)
+            _db = _client[db_name]
+            logger.info(f"✅ Connected to MongoDB ({db_name})")
+        except Exception as e:
+            logger.error(f"❌ Failed to connect to MongoDB: {e}")
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    return _db
+
+
+# =========================================================
 # TWILIO CONFIG & SMS HELPER
 # =========================================================
 
@@ -56,7 +100,6 @@ def send_patient_sms(name: str, phone: str, date: str, time: str, service: str):
             f"Dr. Ikhankar looks forward to seeing you!"
         )
 
-        # Add Indian country code if not present
         formatted_phone = phone if phone.startswith("+") else f"+91{phone}"
 
         message = client.messages.create(
@@ -71,50 +114,6 @@ def send_patient_sms(name: str, phone: str, date: str, time: str, service: str):
     except Exception as e:
         logger.error(f"❌ SMS sending failed: {str(e)}")
         return False
-
-
-# =========================================================
-# MONGODB CONNECTION (Safe for Serverless & Standalone)
-# =========================================================
-
-mongo_url = os.environ.get("MONGO_URL")
-if mongo_url and "#@" in mongo_url:
-    mongo_url = mongo_url.replace("#@", "%23@")
-
-db_name = os.environ.get("DB_NAME", "dentists")
-
-client: Optional[AsyncIOMotorClient] = None
-db = None
-
-if mongo_url:
-    try:
-        client = AsyncIOMotorClient(mongo_url)
-        db = client[db_name]
-        logger.info(f"✅ MongoDB client initialized for database: {db_name}")
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize MongoDB client: {e}")
-else:
-    logger.warning("⚠️ MONGO_URL not set in environment variables.")
-
-def check_db():
-    if db is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Database connection not configured. Please set MONGO_URL in environment variables."
-        )
-
-
-# =========================================================
-# FASTAPI APP & ROUTER
-# =========================================================
-
-app = FastAPI(
-    title="Orthodontic Surgeon API",
-    description="Backend API for Appointments, Status, and Clinic Management",
-    version="1.0.0"
-)
-
-router = APIRouter()
 
 
 # =========================================================
@@ -161,19 +160,19 @@ async def root():
 
 @router.post("/status", response_model=StatusCheck)
 async def create_status_check(input_data: StatusCheckCreate):
-    check_db()
+    database = get_db()
     status_dict = input_data.model_dump()
     status_obj = StatusCheck(**status_dict)
     doc = status_obj.model_dump()
     doc["timestamp"] = doc["timestamp"].isoformat()
-    await db.status_checks.insert_one(doc)
+    await database.status_checks.insert_one(doc)
     return status_obj
 
 
 @router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
-    check_db()
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+    database = get_db()
+    status_checks = await database.status_checks.find({}, {"_id": 0}).to_list(1000)
     for check in status_checks:
         if isinstance(check.get("timestamp"), str):
             check["timestamp"] = datetime.fromisoformat(check["timestamp"])
@@ -186,12 +185,9 @@ async def get_status_checks():
 
 @router.get("/appointments/check-availability")
 async def check_availability(date: str):
-    """
-    Checks MongoDB to see how many bookings exist for a specific date
-    """
-    check_db()
+    database = get_db()
     try:
-        count = await db.appointments.count_documents({"preferred_date": date})
+        count = await database.appointments.count_documents({"preferred_date": date})
         MAX_PATIENTS_PER_DAY = 10
 
         if count >= MAX_PATIENTS_PER_DAY:
@@ -212,16 +208,14 @@ async def check_availability(date: str):
 
 @router.post("/appointments")
 async def book_appointment(appointment: Appointment):
-    check_db()
+    database = get_db()
     try:
         appointment_dict = appointment.model_dump()
         appointment_dict["created_at"] = appointment_dict["created_at"].isoformat()
 
-        # Save to MongoDB
-        await db.appointments.insert_one(appointment_dict)
+        await database.appointments.insert_one(appointment_dict)
         logger.info(f"✅ Appointment saved for {appointment_dict.get('name')}")
 
-        # SMS Notification via Twilio
         sms_result = send_patient_sms(
             name=appointment_dict.get("name", "Patient"),
             phone=appointment_dict.get("phone", ""),
@@ -244,20 +238,19 @@ async def book_appointment(appointment: Appointment):
 
 @router.get("/appointments")
 async def get_appointments(password: Optional[str] = None):
-    check_db()
-    # Optional password protection check if password query is provided or admin password is configured
+    database = get_db()
     admin_pw = os.environ.get("ADMIN_PASSWORD", "doctor123")
     if password is not None and password != admin_pw:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    appointments = await db.appointments.find({}, {"_id": 0}).to_list(1000)
+    appointments = await database.appointments.find({}, {"_id": 0}).to_list(1000)
     return appointments
 
 
 @router.get("/appointments/date/{selected_date}")
 async def get_appointments_by_date(selected_date: str):
-    check_db()
-    appointments = await db.appointments.find(
+    database = get_db()
+    appointments = await database.appointments.find(
         {"preferred_date": selected_date},
         {"_id": 0}
     ).to_list(1000)
@@ -266,21 +259,20 @@ async def get_appointments_by_date(selected_date: str):
 
 @router.delete("/appointments/{appointment_id}")
 async def delete_appointment(appointment_id: str):
-    check_db()
-    result = await db.appointments.delete_one({"id": appointment_id})
+    database = get_db()
+    result = await database.appointments.delete_one({"id": appointment_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"message": "Appointment deleted successfully"}
 
 
 # =========================================================
-# REGISTER ROUTER & MIDDLEWARES (Supports /api and direct)
+# REGISTER ROUTER & MIDDLEWARES
 # =========================================================
 
 app.include_router(router, prefix="/api")
 app.include_router(router)
 
-# Comprehensive CORS Middleware configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -288,16 +280,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# =========================================================
-# SHUTDOWN EVENT
-# =========================================================
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    if client:
-        client.close()
 
 
 # =========================================================

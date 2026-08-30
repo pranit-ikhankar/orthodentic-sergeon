@@ -19,7 +19,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =========================================================
-# FASTAPI APP INITIALIZATION
+# FASTAPI APP
 # =========================================================
 
 app = FastAPI(
@@ -29,6 +29,38 @@ app = FastAPI(
 )
 
 router = APIRouter()
+
+# =========================================================
+# LAZY MONGODB CLIENT (Safe for Python 3.12 Serverless)
+# =========================================================
+
+_client: Optional[AsyncIOMotorClient] = None
+_db = None
+
+def get_db():
+    global _client, _db
+    if _db is None:
+        mongo_url = os.environ.get("MONGO_URL")
+        if not mongo_url:
+            raise HTTPException(
+                status_code=503,
+                detail="Database connection not configured. Please set MONGO_URL in Vercel settings."
+            )
+
+        if "#@" in mongo_url:
+            mongo_url = mongo_url.replace("#@", "%23@")
+
+        db_name = os.environ.get("DB_NAME", "dentists")
+        try:
+            _client = AsyncIOMotorClient(mongo_url)
+            _db = _client[db_name]
+            logger.info(f"✅ Connected to MongoDB database: {db_name}")
+        except Exception as e:
+            logger.error(f"❌ Failed to connect to MongoDB: {e}")
+            raise HTTPException(status_code=500, detail=f"Database connection error: {str(e)}")
+
+    return _db
+
 
 # =========================================================
 # TWILIO HELPER
@@ -43,7 +75,7 @@ def send_patient_sms(name: str, phone: str, date: str, time: str, service: str):
     Sends appointment confirmation SMS to patient using Twilio
     """
     if not all([TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM]):
-        logger.warning("⚠️ Twilio credentials not fully set in environment. Skipping SMS.")
+        logger.warning("⚠️ Twilio credentials missing in environment. SMS skipped.")
         return False
 
     try:
@@ -70,37 +102,6 @@ def send_patient_sms(name: str, phone: str, date: str, time: str, service: str):
     except Exception as e:
         logger.error(f"❌ SMS sending failed: {str(e)}")
         return False
-
-
-# =========================================================
-# MONGODB CONNECTION (Resilient Serverless Pool)
-# =========================================================
-
-mongo_url = os.environ.get("MONGO_URL")
-if mongo_url and "#@" in mongo_url:
-    mongo_url = mongo_url.replace("#@", "%23@")
-
-db_name = os.environ.get("DB_NAME", "dentists")
-
-client: Optional[AsyncIOMotorClient] = None
-db = None
-
-if mongo_url:
-    try:
-        client = AsyncIOMotorClient(mongo_url)
-        db = client[db_name]
-        logger.info(f"✅ Connected to MongoDB ({db_name})")
-    except Exception as e:
-        logger.error(f"❌ Failed to connect to MongoDB: {e}")
-
-
-def get_db():
-    if db is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Database connection not available. Please ensure MONGO_URL is configured in Vercel settings."
-        )
-    return db
 
 
 # =========================================================
@@ -168,9 +169,6 @@ async def get_status_checks():
 
 @router.get("/appointments/check-availability")
 async def check_availability(date: str):
-    """
-    Checks how many bookings exist for a specific date
-    """
     database = get_db()
     try:
         count = await database.appointments.count_documents({"preferred_date": date})
