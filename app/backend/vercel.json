@@ -1,4 +1,6 @@
 {
+  "installCommand": "echo 'Python backend ready'",
+  "buildCommand": "echo 'Python backend ready'",
   "rewrites": [
     {
       "source": "/(.*)",
