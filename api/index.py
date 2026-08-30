@@ -1,12 +1,15 @@
-from fastapi import FastAPI, APIRouter, HTTPException
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional
-from datetime import datetime, timezone
-import uuid
+import sys
+import traceback
 import os
+import uuid
 import logging
+from datetime import datetime, timezone
+from typing import List, Optional
+
+from fastapi import FastAPI, APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
+from starlette.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field, ConfigDict
 
 # =========================================================
 # LOGGING
@@ -28,13 +31,31 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Global Exception Middleware for instant diagnostics
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        trace = traceback.format_exc()
+        logger.error(f"Unhandled server error: {trace}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": str(exc),
+                "type": type(exc).__name__,
+                "traceback": trace.splitlines()[-5:]
+            }
+        )
+
 router = APIRouter()
 
 # =========================================================
-# LAZY MONGODB CLIENT (Safe for Python 3.12 Serverless)
+# LAZY MONGODB CLIENT
 # =========================================================
 
-_client: Optional[AsyncIOMotorClient] = None
+_client = None
 _db = None
 
 def get_db():
@@ -44,7 +65,7 @@ def get_db():
         if not mongo_url:
             raise HTTPException(
                 status_code=503,
-                detail="Database connection not configured. Please set MONGO_URL in Vercel settings."
+                detail="MONGO_URL environment variable is not configured in Vercel settings."
             )
 
         if "#@" in mongo_url:
@@ -52,9 +73,10 @@ def get_db():
 
         db_name = os.environ.get("DB_NAME", "dentists")
         try:
+            from motor.motor_asyncio import AsyncIOMotorClient
             _client = AsyncIOMotorClient(mongo_url)
             _db = _client[db_name]
-            logger.info(f"✅ Connected to MongoDB database: {db_name}")
+            logger.info(f"✅ Connected to MongoDB ({db_name})")
         except Exception as e:
             logger.error(f"❌ Failed to connect to MongoDB: {e}")
             raise HTTPException(status_code=500, detail=f"Database connection error: {str(e)}")
@@ -71,9 +93,6 @@ TWILIO_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
 TWILIO_FROM = os.environ.get("TWILIO_SMS_NUMBER")
 
 def send_patient_sms(name: str, phone: str, date: str, time: str, service: str):
-    """
-    Sends appointment confirmation SMS to patient using Twilio
-    """
     if not all([TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM]):
         logger.warning("⚠️ Twilio credentials missing in environment. SMS skipped.")
         return False
