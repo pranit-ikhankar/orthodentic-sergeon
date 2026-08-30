@@ -1,10 +1,6 @@
 # 🦷 Orthodontic Surgeon & Dental Clinic Platform
 
 <p align="center">
-  <img src="https://images.unsplash.com/photo-1653508310326-2482de0e96c3?w=1200&auto=format&fit=crop&q=80" alt="Orthodontic Clinic Banner" width="100%" style="border-radius: 12px; max-height: 380px; object-fit: cover;" />
-</p>
-
-<p align="center">
   <strong>A modern, full-stack dental practice web application & clinic management system.</strong><br>
   Equipped with real-time patient appointment booking, Twilio SMS confirmations, slot availability validation, and a secured doctor/admin portal.
 </p>
