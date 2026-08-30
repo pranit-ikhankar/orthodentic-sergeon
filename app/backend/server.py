@@ -292,7 +292,6 @@ async def delete_appointment(appointment_id: str):
 # =========================================================
 
 app.include_router(router, prefix="/api")
-app.include_router(router)
 
 app.add_middleware(
     CORSMiddleware,
