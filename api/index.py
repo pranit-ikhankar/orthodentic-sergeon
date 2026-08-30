@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
-from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ConfigDict
 
 # =========================================================
