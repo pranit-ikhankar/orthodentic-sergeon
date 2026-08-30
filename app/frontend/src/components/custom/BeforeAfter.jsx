@@ -38,7 +38,7 @@ const BeforeAfter = () => {
             style={{ fontFamily: 'DM Sans, sans-serif' }}
             data-testid="before-after-description"
           >
-            See the life-changing results our patients have achieved with our advanced orthodentic treatments.
+            See the life-changing mobility outcomes our patients have achieved through our advanced joint restoration and orthopedic procedures.
           </p>
         </div>
 

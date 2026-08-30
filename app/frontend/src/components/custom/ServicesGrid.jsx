@@ -63,14 +63,14 @@ const ServicesGrid = () => {
             style={{ fontFamily: 'Manrope, sans-serif', letterSpacing: '-0.02em' }}
             data-testid="services-heading"
           >
-            Our Services
+            Our Orthopedic Specialties
           </h2>
           <p
             className="text-lg text-slate-600 max-w-3xl mx-auto"
             style={{ fontFamily: 'DM Sans, sans-serif' }}
             data-testid="services-description"
           >
-            From routine checkups to advanced procedures, we offer comprehensive dental services to meet all your oral health needs.
+            From preventative joint care to advanced minimally invasive reconstructions, we offer comprehensive orthopedic and joint surgical treatments tailored to your mobility goals.
           </p>
         </div>
 

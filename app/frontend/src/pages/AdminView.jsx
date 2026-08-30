@@ -36,8 +36,8 @@ const AdminView = () => {
 
 
   const fetchAppointments = async (date) => {
-
     try {
+      setLoading(true);
 
       const formattedDate = date
         .toISOString()
@@ -47,13 +47,15 @@ const AdminView = () => {
 
       setAppointments(data);
 
-      setLoading(false);
-
     } catch (error) {
 
       console.log(error);
 
       alert("Failed to connect to backend");
+
+      setAppointments([]);
+
+    } finally {
 
       setLoading(false);
     }

@@ -112,23 +112,23 @@ const ContactSection = () => {
   const contactInfo = [
     {
       icon: MapPin,
-      title: 'Visit Us',
-      content: '[Street Address], [City, State, ZIP]'
+      title: 'Visit Our Institute',
+      content: 'Orthopedic Excellence Wing, Medical Enclave, City Hospital Road'
     },
     {
       icon: Phone,
-      title: 'Call Us',
-      content: '+1 (234) 567-8900'
+      title: 'Emergency / Consultations',
+      content: '+91 98765 43210'
     },
     {
       icon: Mail,
       title: 'Email Us',
-      content: 'info@orthosurgeon.com'
+      content: 'appointments@dr-ikhankar.com'
     },
     {
       icon: Clock,
-      title: 'Hours',
-      content: 'Mon-Fri: 9AM-6PM, Sat: 9AM-2PM'
+      title: 'Clinic Hours',
+      content: 'Mon-Fri: 9AM-6PM, Sat: 9AM-2PM (Sun: Emergency)'
     }
   ];
 

@@ -11,10 +11,29 @@ export const apiClient = axios.create({
   },
 });
 
+/**
+ * Format local Date object to YYYY-MM-DD string without UTC timezone skew
+ */
+export const formatLocalDate = (date) => {
+  if (!date) return '';
+  if (typeof date === 'string') {
+    // If it's already YYYY-MM-DD, return it
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+    date = new Date(date);
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const api = {
+  formatLocalDate,
+
   // Check appointment slot availability for a specific date
   checkAvailability: async (date) => {
-    const response = await apiClient.get(`/api/appointments/check-availability?date=${date}`);
+    const dateStr = formatLocalDate(date);
+    const response = await apiClient.get(`/api/appointments/check-availability?date=${encodeURIComponent(dateStr)}`);
     return response.data;
   },
 
@@ -25,7 +44,7 @@ export const api = {
   },
 
   // Get all appointments (optional password check)
-  getAppointments: async (password) => {
+  getAppointments: async (password = 'doctor123') => {
     const url = password ? `/api/appointments?password=${encodeURIComponent(password)}` : '/api/appointments';
     const response = await apiClient.get(url);
     return response.data;
@@ -33,7 +52,8 @@ export const api = {
 
   // Get appointments for a specific date
   getAppointmentsByDate: async (date) => {
-    const response = await apiClient.get(`/api/appointments/date/${date}`);
+    const dateStr = formatLocalDate(date);
+    const response = await apiClient.get(`/api/appointments/date/${encodeURIComponent(dateStr)}`);
     return response.data;
   },
 
@@ -51,3 +71,4 @@ export const api = {
 };
 
 export default api;
+
