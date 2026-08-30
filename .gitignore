@@ -1,5 +1,16 @@
+# Dependencies
 node_modules/
+venv/
+.venv/
 __pycache__/
-.env
-build/
+*.pyc
+
+# Production Builds
 dist/
+build/
+.vercel/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local

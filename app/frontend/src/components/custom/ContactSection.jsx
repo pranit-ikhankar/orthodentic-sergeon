@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import axios from 'axios';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import api from '../../utils/api';
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -18,7 +15,7 @@ const ContactSection = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // New States for managing doctor availability validations
+  // States for managing doctor availability validations
   const [availabilityMsg, setAvailabilityMsg] = useState('');
   const [isDateValid, setIsDateValid] = useState(false);
 
@@ -29,7 +26,7 @@ const ContactSection = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // New function to handle picking dates and checking API availability
+  // Handle picking dates and checking API availability
   const handleDateChange = async (selectedDate) => {
     if (!selectedDate) {
       setFormData(prev => ({ ...prev, preferred_date: '' }));
@@ -56,22 +53,21 @@ const ContactSection = () => {
 
     // 2. Contact Backend API to check database slots count
     try {
-      // Calls your new FastAPI endpoint
-      const res = await axios.get(`http://localhost:8000/api/appointments/check-availability?date=${selectedDate}`);
+      const data = await api.checkAvailability(selectedDate);
       
-      if (res.data.available) {
-        setAvailabilityMsg(`✅ ${res.data.message}`);
+      if (data.available) {
+        setAvailabilityMsg(`✅ ${data.message}`);
         setIsDateValid(true); // Unlocks submission ability
       } else {
-        toast.error(res.data.message);
-        setAvailabilityMsg(`❌ ${res.data.message}`);
+        toast.error(data.message);
+        setAvailabilityMsg(`❌ ${data.message}`);
         setFormData(prev => ({ ...prev, preferred_date: '' })); // Clear if full
         setIsDateValid(false);
       }
     } catch (error) {
       console.error('Availability check failed:', error);
-      // Fallback: If local backend database connection isn't up, allow submission anyway
-      setAvailabilityMsg('⚠️ Local check unavailable, but date selected.');
+      // Fallback: allow submission
+      setAvailabilityMsg('⚠️ Availability check offline, booking will proceed.');
       setIsDateValid(true); 
     }
   };
@@ -92,7 +88,7 @@ const ContactSection = () => {
 
     setIsSubmitting(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/appointments`, formData);
+      await api.bookAppointment(formData);
       toast.success('Appointment request submitted successfully! We\'ll contact you soon.');
       setFormData({
         name: '',
@@ -107,7 +103,7 @@ const ContactSection = () => {
       setIsDateValid(false);
     } catch (error) {
       console.error('Error submitting appointment:', error);
-      toast.error('Failed to submit appointment. Please try again.');
+      toast.error(error.response?.data?.detail || 'Failed to submit appointment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

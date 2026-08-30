@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../utils/api";
 import DatePicker from "react-datepicker";
 
 import "react-datepicker/dist/react-datepicker.css";
@@ -43,11 +43,9 @@ const AdminView = () => {
         .toISOString()
         .split("T")[0];
 
-      const res = await axios.get(
-        `http://localhost:8000/api/appointments/date/${formattedDate}`
-      );
+      const data = await api.getAppointmentsByDate(formattedDate);
 
-      setAppointments(res.data);
+      setAppointments(data);
 
       setLoading(false);
 
@@ -69,9 +67,7 @@ const AdminView = () => {
 
     try {
 
-      await axios.delete(
-        `http://localhost:8000/api/appointments/${id}`
-      );
+      await api.deleteAppointment(id);
 
       setAppointments(prev =>
         prev.filter(a => a.id !== id)

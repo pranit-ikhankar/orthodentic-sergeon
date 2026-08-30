@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 
 export default function DoctorScheduler() {
   const [formData, setFormData] = useState({
@@ -22,8 +22,8 @@ export default function DoctorScheduler() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/api/appointments", formData);
-      if (response.status === 200 || response.status === 201) {
+      const response = await api.bookAppointment(formData);
+      if (response && response.success) {
         alert(`${formData.type === "appointment" ? "Appointment" : "Follow-up"} booked successfully! Notification triggered.`);
         setFormData({
           name: "", phone: "", email: "", service: "Consultation",
@@ -32,7 +32,7 @@ export default function DoctorScheduler() {
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to book scheduling entry.");
+      alert(error.response?.data?.detail || "Failed to book scheduling entry.");
     } finally {
       setLoading(false);
     }

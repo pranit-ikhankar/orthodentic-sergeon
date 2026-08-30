@@ -1,0 +1,10 @@
+{
+  "name": "orthodontic-clinic",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix app/frontend",
+    "build": "npm run build --prefix app/frontend",
+    "install:all": "npm install --prefix app/frontend"
+  }
+}
