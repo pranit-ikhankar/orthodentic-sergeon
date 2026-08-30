@@ -1,4 +1,7 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+import sys
+import traceback
+from fastapi import FastAPI, APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -38,6 +41,24 @@ app = FastAPI(
     description="Backend API for Appointments, Status, and Clinic Management",
     version="1.0.0"
 )
+
+# Global Diagnostic Error Middleware
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        trace = traceback.format_exc()
+        logger.error(f"Unhandled server error: {trace}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": str(exc),
+                "type": type(exc).__name__,
+                "traceback": trace.splitlines()[-5:]
+            }
+        )
 
 router = APIRouter()
 
