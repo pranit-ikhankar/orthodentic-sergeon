@@ -111,7 +111,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-api_router = APIRouter(prefix="/api")
+router = APIRouter()
 
 
 # =========================================================
@@ -147,8 +147,7 @@ class Appointment(BaseModel):
 # ROOT & STATUS ROUTES
 # =========================================================
 
-@app.get("/")
-@api_router.get("/")
+@router.get("/")
 async def root():
     return {
         "status": "online",
@@ -157,7 +156,7 @@ async def root():
     }
 
 
-@api_router.post("/status", response_model=StatusCheck)
+@router.post("/status", response_model=StatusCheck)
 async def create_status_check(input_data: StatusCheckCreate):
     check_db()
     status_dict = input_data.model_dump()
@@ -168,7 +167,7 @@ async def create_status_check(input_data: StatusCheckCreate):
     return status_obj
 
 
-@api_router.get("/status", response_model=List[StatusCheck])
+@router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
     check_db()
     status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
@@ -182,7 +181,7 @@ async def get_status_checks():
 # APPOINTMENT ROUTES
 # =========================================================
 
-@api_router.get("/appointments/check-availability")
+@router.get("/appointments/check-availability")
 async def check_availability(date: str):
     """
     Checks MongoDB to see how many bookings exist for a specific date
@@ -208,7 +207,7 @@ async def check_availability(date: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.post("/appointments")
+@router.post("/appointments")
 async def book_appointment(appointment: Appointment):
     check_db()
     try:
@@ -240,7 +239,7 @@ async def book_appointment(appointment: Appointment):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.get("/appointments")
+@router.get("/appointments")
 async def get_appointments(password: Optional[str] = None):
     check_db()
     # Optional password protection check if password query is provided or admin password is configured
@@ -252,7 +251,7 @@ async def get_appointments(password: Optional[str] = None):
     return appointments
 
 
-@api_router.get("/appointments/date/{selected_date}")
+@router.get("/appointments/date/{selected_date}")
 async def get_appointments_by_date(selected_date: str):
     check_db()
     appointments = await db.appointments.find(
@@ -262,7 +261,7 @@ async def get_appointments_by_date(selected_date: str):
     return appointments
 
 
-@api_router.delete("/appointments/{appointment_id}")
+@router.delete("/appointments/{appointment_id}")
 async def delete_appointment(appointment_id: str):
     check_db()
     result = await db.appointments.delete_one({"id": appointment_id})
@@ -272,10 +271,11 @@ async def delete_appointment(appointment_id: str):
 
 
 # =========================================================
-# REGISTER ROUTER & MIDDLEWARES
+# REGISTER ROUTER & MIDDLEWARES (Supports /api and direct)
 # =========================================================
 
-app.include_router(api_router)
+app.include_router(router, prefix="/api")
+app.include_router(router)
 
 # Comprehensive CORS Middleware configuration
 app.add_middleware(

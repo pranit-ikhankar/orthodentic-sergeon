@@ -1,4 +1,5 @@
 {
+  "installCommand": "npm install --prefix app/frontend",
   "buildCommand": "npm run build --prefix app/frontend",
   "outputDirectory": "app/frontend/dist",
   "rewrites": [
