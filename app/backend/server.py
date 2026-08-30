@@ -78,6 +78,9 @@ def send_patient_sms(name: str, phone: str, date: str, time: str, service: str):
 # =========================================================
 
 mongo_url = os.environ.get("MONGO_URL")
+if mongo_url and "#@" in mongo_url:
+    mongo_url = mongo_url.replace("#@", "%23@")
+
 db_name = os.environ.get("DB_NAME", "dentists")
 
 client: Optional[AsyncIOMotorClient] = None
